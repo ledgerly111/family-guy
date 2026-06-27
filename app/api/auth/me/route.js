@@ -6,8 +6,8 @@ export const runtime = 'edge'
 export async function GET() {
   const auth = await getCurrentAuth()
   if (!auth) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    return NextResponse.json({ authenticated: false })
   }
 
-  return NextResponse.json(authPayload(auth))
+  return NextResponse.json({ authenticated: true, ...authPayload(auth) })
 }

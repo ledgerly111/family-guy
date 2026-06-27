@@ -35,6 +35,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/family-guy-icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/family-guy-icon-192.png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/family-guy-icon-192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#170624" />
       </head>
       <body className={manrope.className}>{children}</body>

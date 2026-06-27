@@ -214,6 +214,13 @@ export default function FinanceTracker() {
         }
 
         const authData = await authResponse.json()
+        if (!authData.authenticated || !authData.user) {
+          if (!cancelled) {
+            setHydrated(true)
+          }
+          return
+        }
+
         const stateResponse = await fetch('/api/finance/state', { cache: 'no-store' })
         const stateData = stateResponse.ok ? await stateResponse.json() : {}
 

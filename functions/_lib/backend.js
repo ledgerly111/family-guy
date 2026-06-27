@@ -399,8 +399,8 @@ export async function handleLogout({ request, env }) {
 export async function handleMe({ request, env }) {
   await ensureSchema(env)
   const auth = await getCurrentAuth(env, request)
-  if (!auth) return json({ error: 'Not authenticated' }, 401)
-  return json(authPayload(auth))
+  if (!auth) return json({ authenticated: false })
+  return json({ authenticated: true, ...authPayload(auth) })
 }
 
 export async function handleMembers({ request, env }) {
