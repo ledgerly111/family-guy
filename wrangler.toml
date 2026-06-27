@@ -1,0 +1,7 @@
+name = "family-guy-finance"
+compatibility_date = "2026-06-27"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "family-guy-finance"
+database_id = "79a62e72-a3c5-4f62-b6fa-25ed61b6788a"
