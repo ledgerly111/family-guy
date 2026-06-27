@@ -15,6 +15,7 @@ export const metadata = {
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/family-guy-icon.svg', type: 'image/svg+xml' },
       { url: '/family-guy-icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/family-guy-icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/family-guy-icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/family-guy-icon-192.png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/family-guy-icon-192.png" />

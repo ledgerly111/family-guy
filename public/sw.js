@@ -1,6 +1,7 @@
 const CACHE_NAME = 'family-guy-finance-v1'
 const APP_SHELL = [
   '/',
+  '/favicon.ico',
   '/manifest.webmanifest',
   '/family-guy-icon.svg',
   '/family-guy-icon-192.png',
