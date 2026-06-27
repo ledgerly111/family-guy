@@ -25,6 +25,8 @@ yarn-debug.log*
 yarn-error.log*
 next-dev.log
 next-dev-error.log
+next-dev-3000.log
+next-dev-3000-error.log
 
 # local agent/runtime folders
 .agents/

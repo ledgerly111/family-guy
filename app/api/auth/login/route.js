@@ -9,7 +9,7 @@ import { hashSessionToken } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody } from '@/lib/server/validation'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function POST(request) {
   try {

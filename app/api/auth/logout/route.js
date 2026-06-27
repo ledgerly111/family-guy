@@ -3,7 +3,7 @@ import { clearSessionCookie, sessionCookieName } from '@/lib/server/auth'
 import { hashSessionToken } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function POST(request) {
   const token = request.cookies.get(sessionCookieName)?.value

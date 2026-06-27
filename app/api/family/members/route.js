@@ -4,7 +4,7 @@ import { createInvitePassword, normalizeEmail } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody, validateEmail, validatePassword } from '@/lib/server/validation'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function GET() {
   const { auth, error } = await requireAuth()

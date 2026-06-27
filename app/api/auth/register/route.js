@@ -4,7 +4,7 @@ import { createId, normalizeEmail } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody, validateEmail, validatePassword } from '@/lib/server/validation'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function POST(request) {
   try {

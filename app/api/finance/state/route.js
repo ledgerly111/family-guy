@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/server/auth'
 import { getStore } from '@/lib/server/store'
 import { cleanFinanceState } from '@/lib/server/validation'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function GET() {
   const { auth, error } = await requireAuth()
