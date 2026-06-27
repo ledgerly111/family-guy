@@ -1,0 +1,13 @@
+runConfig:
+  minInstances: 0
+  maxInstances: 1
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: CLOUDFLARE_D1_DATABASE_ID
+    value: "79a62e72-a3c5-4f62-b6fa-25ed61b6788a"
+    availability:
+      - BUILD
+      - RUNTIME
