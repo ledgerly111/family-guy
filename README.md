@@ -16,17 +16,14 @@ The dev script starts the app on `http://127.0.0.1:3001`.
 
 ## Cloudflare D1 Setup
 
-Copy `.env.example` to `.env.local` and fill in your Cloudflare values:
+The database id is already configured in `wrangler.toml`:
 
 ```bash
-CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
-CLOUDFLARE_D1_DATABASE_ID=79a62e72-a3c5-4f62-b6fa-25ed61b6788a
-CLOUDFLARE_D1_API_TOKEN=your_d1_api_token
+79a62e72-a3c5-4f62-b6fa-25ed61b6788a
 ```
 
-The database id is already set to the Family Guy D1 database. Cloudflare also
-requires the account id and an API token with D1 edit access before the app can
-write to the remote database.
+Cloudflare Pages should bind this database as `DB`. The native Pages Functions
+under `functions/api/*` read and write through that binding.
 
 Create the D1 tables with Wrangler:
 
@@ -41,43 +38,26 @@ and you can trigger it manually after adding environment variables:
 curl -X POST http://127.0.0.1:3001/api/admin/setup
 ```
 
-When D1 credentials are missing, local development falls back to an in-memory
-store. Production deployments require D1 credentials and will not use the local
-fallback.
+The API also calls the schema setup automatically during auth/state requests.
 
 ## Cloudflare Pages Deployment
 
 This app is configured for Cloudflare Pages hosting and Cloudflare D1 storage.
-The pasted deploy log failed because Pages ran plain `next build`, which does
-not create the `.vercel/output/static` directory Cloudflare was configured to
-upload.
+The mobile UI is exported as static files, and backend routes are native
+Cloudflare Pages Functions.
 
 Use these Cloudflare Pages settings:
 
 ```bash
 Build command: npm run build
-Build output directory: .vercel/output/static
+Build output directory: out
 ```
 
-The `build` script runs the pinned Cloudflare Next adapter from `package-lock.json`,
-so Pages will create the correct output directory during deployment.
-`vercel.json` is present only because the Cloudflare adapter internally runs
-Vercel's build engine; it tells that internal step to run plain `next build`
-instead of recursively calling the Cloudflare adapter again.
+The `build` script runs `next build` with `output: 'export'`, so Pages serves
+the app from `out` without a Next adapter worker.
 
-`wrangler.toml` also declares `pages_build_output_dir = ".vercel/output/static"`
+`wrangler.toml` also declares `pages_build_output_dir = "out"`
 so Cloudflare no longer treats the config as invalid.
-
-Set these runtime environment variables in Cloudflare Pages:
-
-```bash
-CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
-CLOUDFLARE_D1_DATABASE_ID=79a62e72-a3c5-4f62-b6fa-25ed61b6788a
-CLOUDFLARE_D1_API_TOKEN=your_d1_api_token
-```
-
-The API token must stay in Cloudflare's environment settings. Do not commit it
-to git.
 
 ## Features
 
