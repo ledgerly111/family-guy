@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authPayload, getCurrentAuth } from '@/lib/server/auth'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function GET() {
   const auth = await getCurrentAuth()

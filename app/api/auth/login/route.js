@@ -9,7 +9,7 @@ import { hashSessionToken } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody } from '@/lib/server/validation'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function POST(request) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request) {
     const family = { id: user.familyId, name: 'Family Guy' }
     const session = await store.getUserById(user.id)
     const token = await createSessionForUser(user.id)
-    const auth = await store.getSession(hashSessionToken(token))
+    const auth = await store.getSession(await hashSessionToken(token))
     const members = await store.getMembers(user.familyId)
     const response = NextResponse.json(
       authPayload({

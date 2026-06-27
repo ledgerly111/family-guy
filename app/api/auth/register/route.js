@@ -4,7 +4,7 @@ import { createId, normalizeEmail } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody, validateEmail, validatePassword } from '@/lib/server/validation'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function POST(request) {
   try {
@@ -36,7 +36,7 @@ export async function POST(request) {
       name: familyName,
       createdAt: new Date().toISOString(),
     }
-    const owner = buildUser({
+    const owner = await buildUser({
       familyId: family.id,
       email,
       password,

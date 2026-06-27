@@ -4,7 +4,7 @@ import { createInvitePassword, normalizeEmail } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody, validateEmail, validatePassword } from '@/lib/server/validation'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function GET() {
   const { auth, error } = await requireAuth()
@@ -41,7 +41,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'This email is already registered.' }, { status: 409 })
   }
 
-  const user = buildUser({
+  const user = await buildUser({
     familyId: auth.user.familyId,
     email,
     password,

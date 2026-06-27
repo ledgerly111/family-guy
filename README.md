@@ -41,18 +41,31 @@ and you can trigger it manually after adding environment variables:
 curl -X POST http://127.0.0.1:3001/api/admin/setup
 ```
 
-When D1 credentials are missing, local development falls back to a private JSON
-store at `.data/family-guy-dev-db.json`. That file is ignored by git. Production
-deployments require D1 credentials and will not use the local fallback.
+When D1 credentials are missing, local development falls back to an in-memory
+store. Production deployments require D1 credentials and will not use the local
+fallback.
 
-## Deployment
+## Cloudflare Pages Deployment
 
-### Firebase
+This app is configured for Cloudflare Pages hosting and Cloudflare D1 storage.
+The pasted deploy log failed because Pages ran plain `next build`, which does
+not create the `.vercel/output/static` directory Cloudflare was configured to
+upload.
 
-Use Firebase App Hosting or Firebase Hosting with framework-aware Next.js
-support. This repo includes `firebase.json` and `apphosting.yaml`.
+Use these Cloudflare Pages settings:
 
-Set these runtime environment variables in Firebase before using the app:
+```bash
+Build command: npm run build
+Build output directory: .vercel/output/static
+```
+
+The `build` script runs the Cloudflare Next adapter, so Pages will create the
+correct output directory during deployment.
+
+`wrangler.toml` also declares `pages_build_output_dir = ".vercel/output/static"`
+so Cloudflare no longer treats the config as invalid.
+
+Set these runtime environment variables in Cloudflare Pages:
 
 ```bash
 CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
@@ -60,23 +73,8 @@ CLOUDFLARE_D1_DATABASE_ID=79a62e72-a3c5-4f62-b6fa-25ed61b6788a
 CLOUDFLARE_D1_API_TOKEN=your_d1_api_token
 ```
 
-The token must stay in Firebase secrets or environment settings. Do not commit
-it to git.
-
-### Cloudflare Pages
-
-The pasted deploy log is from Cloudflare Pages. It failed because Pages was
-looking for `dist`, but this is a Next.js app.
-
-Use these Cloudflare Pages settings:
-
-```bash
-Build command: npm run build:cloudflare
-Build output directory: .vercel/output/static
-```
-
-`wrangler.toml` also declares `pages_build_output_dir = ".vercel/output/static"`
-so Cloudflare no longer treats the config as invalid.
+The API token must stay in Cloudflare's environment settings. Do not commit it
+to git.
 
 ## Features
 
