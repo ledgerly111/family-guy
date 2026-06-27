@@ -508,24 +508,6 @@ export default function FinanceTracker() {
     })
   }, [familyMembers, periodTransactions])
 
-  const donutGradient = useMemo(() => {
-    if (totals.spendTotal === 0) {
-      return 'conic-gradient(#8b2cff 0deg 260deg, #f02ca6 260deg 360deg)'
-    }
-
-    let cursor = 0
-    const segments = categoryTotals.map(category => {
-      const start = cursor
-      const width = totals.spendTotal
-        ? (category.total / totals.spendTotal) * 360
-        : 0
-      cursor += width
-      return `${category.color} ${start}deg ${cursor}deg`
-    })
-
-    return `conic-gradient(${segments.join(', ') || '#1f2a24 0deg 360deg'})`
-  }, [categoryTotals, totals.spendTotal])
-
   const openTransactionModal = useCallback((type, preferredAccountId = 'cash') => {
     setForm(current => ({
       ...current,
@@ -759,7 +741,6 @@ export default function FinanceTracker() {
                   <HomeView
                     cards={cards}
                     categoryTotals={categoryTotals}
-                    donutGradient={donutGradient}
                     openCardModal={openCardModal}
                     openTransactionModal={openTransactionModal}
                     period={period}
@@ -1053,7 +1034,6 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
 const HomeView = memo(function HomeView({
   cards,
   categoryTotals,
-  donutGradient,
   openCardModal,
   openTransactionModal,
   period,
@@ -1075,7 +1055,7 @@ const HomeView = memo(function HomeView({
       >
         <div>
           <h2 className="text-[30px] font-extrabold leading-tight">
-            {getGreeting()} 👋
+            {getGreeting()}
           </h2>
           <p className="mt-1.5 text-[15px] leading-relaxed text-[#d9c8ff]/72">
             Here&apos;s your family financial overview.
@@ -1158,7 +1138,6 @@ const HomeView = memo(function HomeView({
 
       <SpendingSummary
         categoryTotals={categoryTotals}
-        donutGradient={donutGradient}
         period={period}
         setPeriod={setPeriod}
         totals={totals}
@@ -1213,7 +1192,6 @@ function MetricCard({ accent, change, icon, label, meta, sublabel, value }) {
 }
 
 function BalanceCard({ totals }) {
-  const reduceMotion = useReducedMotion()
   const change = totals.balanceChange
   const changeClass =
     change?.tone === 'up'
@@ -1221,69 +1199,108 @@ function BalanceCard({ totals }) {
       : change?.tone === 'down'
         ? 'text-[#fb2f7f]'
         : 'text-[#d9c8ff]/58'
+  const cashOut = totals.expense + totals.cardPayments
+  const netCashFlow = totals.income - cashOut
+  const afterCardDue = totals.balance - totals.cardOutstanding
+  const railMax = Math.max(totals.income, cashOut, totals.cardOutstanding, 1)
 
   return (
     <motion.article
-      className="relative min-h-[220px] overflow-hidden rounded-[26px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(55,8,91,.9),rgba(18,7,34,.96)_46%,rgba(8,5,18,.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_20px_60px_rgba(128,40,255,.2)] backdrop-blur-xl"
+      className="relative overflow-hidden rounded-[26px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(55,8,91,.88),rgba(18,7,34,.96)_46%,rgba(8,5,18,.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_20px_60px_rgba(128,40,255,.18)]"
       variants={dashboardItemVariants}
       whileTap={{ scale: 0.992 }}
     >
-      <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-[#ef2da4]/[.24] blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-[#8b2cff]/[.18] blur-3xl" />
-      <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-[160px]">
-          <p className="font-extrabold text-white/86">Total Balance</p>
+      <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#ef2da4]/[.20] blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-4 h-40 w-40 rounded-full bg-[#8b2cff]/[.18] blur-3xl" />
+
+      <div className="relative z-10 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-extrabold text-white/86">Balance Position</p>
           <p className="tabular-nums mt-2 text-[clamp(30px,9vw,42px)] font-black leading-tight tracking-normal">
             {formatMoney(totals.balance)}
           </p>
         </div>
-        <div className="rounded-full border border-white/10 bg-white/[.055] px-3 py-2 text-right backdrop-blur-xl">
+        <div className="shrink-0 rounded-full border border-white/[.10] bg-white/[.06] px-3 py-2 text-right">
           <p className={`text-[15px] font-black ${changeClass}`}>
             {change?.label || '0% vs Last Month'}
           </p>
         </div>
       </div>
-      <svg
-        aria-hidden="true"
-        className="relative z-10 mt-4 h-[104px] w-full overflow-visible"
-        viewBox="0 0 360 96"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="balanceLine" x1="0" x2="1" y1="0" y2="0">
-            <stop stopColor="#8e2cff" />
-            <stop offset=".5" stopColor="#f12fff" />
-            <stop offset="1" stopColor="#b737ff" />
-          </linearGradient>
-          <filter id="lineGlow">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <motion.path
-          d="M0 65 C38 42 68 40 103 61 S169 36 210 57 S278 36 313 48 S340 56 360 25"
-          fill="none"
-          filter="url(#lineGlow)"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={reduceMotion ? undefined : { pathLength: 1, opacity: 1 }}
-          stroke="url(#balanceLine)"
-          strokeLinecap="round"
-          strokeWidth="4"
-          transition={{ duration: 1.1, ease: 'easeOut' }}
+
+      <div className="relative z-10 mt-5 grid grid-cols-2 gap-3">
+        <InsightChip
+          label="Net cash flow"
+          tone={netCashFlow >= 0 ? 'good' : 'bad'}
+          value={formatMoney(netCashFlow)}
         />
-        <motion.circle
-          animate={reduceMotion ? undefined : { scale: [1, 1.28, 1] }}
-          cx="360"
-          cy="25"
-          fill="#f6a1ff"
-          r="5"
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        <InsightChip
+          label="After card due"
+          tone={afterCardDue >= 0 ? 'good' : 'bad'}
+          value={formatMoney(afterCardDue)}
         />
-      </svg>
+      </div>
+
+      <div className="relative z-10 mt-5 space-y-3">
+        <FinanceRail
+          color="#17e7a4"
+          label="Income in"
+          max={railMax}
+          value={totals.income}
+        />
+        <FinanceRail
+          color="#fb2f7f"
+          label="Cash out"
+          max={railMax}
+          value={cashOut}
+        />
+        <FinanceRail
+          color="#a855f7"
+          label="Card due"
+          max={railMax}
+          value={totals.cardOutstanding}
+        />
+      </div>
     </motion.article>
+  )
+}
+
+function InsightChip({ label, tone, value }) {
+  return (
+    <div className="rounded-[18px] border border-white/[.08] bg-white/[.045] p-3">
+      <p className="text-[11px] font-bold text-[#d9c8ff]/58">{label}</p>
+      <p
+        className={`tabular-nums mt-1 text-[17px] font-black ${
+          tone === 'good' ? 'text-[#17e7a4]' : 'text-[#fb2f7f]'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function FinanceRail({ color, label, max, value }) {
+  const width = value > 0 ? Math.max(8, Math.round((value / max) * 100)) : 2
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
+        <span className="font-bold text-[#d9c8ff]/70">{label}</span>
+        <span className="tabular-nums font-black text-white/90">
+          {formatMoney(value)}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/[.075]">
+        <span
+          className="block h-full rounded-full shadow-[0_0_18px_currentColor]"
+          style={{
+            width: `${width}%`,
+            background: `linear-gradient(90deg,${color},#f6a1ff)`,
+            color,
+          }}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -1316,12 +1333,24 @@ function QuickButton({ icon, label, onClick, tone }) {
 
 function SpendingSummary({
   categoryTotals,
-  donutGradient,
   period,
   setPeriod,
   totals,
 }) {
-  const reduceMotion = useReducedMotion()
+  const sortedCategories = useMemo(
+    () => [...categoryTotals].sort((a, b) => b.total - a.total),
+    [categoryTotals],
+  )
+  const topCategory = sortedCategories[0]
+  const TopIcon = topCategory?.icon || FiGrid
+  const spendLoad = totals.income
+    ? Math.round((totals.spendTotal / totals.income) * 100)
+    : totals.spendTotal
+      ? 100
+      : 0
+  const cardShare = totals.spendTotal
+    ? Math.round((totals.cardSpend / totals.spendTotal) * 100)
+    : 0
 
   return (
     <motion.section variants={dashboardItemVariants}>
@@ -1329,77 +1358,113 @@ function SpendingSummary({
         <h3 className="text-xl font-extrabold">Spending Summary</h3>
         <PeriodSelect period={period} setPeriod={setPeriod} compact />
       </div>
-      <div className="relative overflow-hidden rounded-[26px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(42,12,78,.72),rgba(12,7,23,.9))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.1),0_18px_48px_rgba(0,0,0,.24)] backdrop-blur-xl">
-        <div className="pointer-events-none absolute -left-12 -top-16 h-32 w-32 rounded-full bg-[#8b2cff]/[.20] blur-3xl" />
-        <div className="pointer-events-none absolute -right-14 bottom-4 h-32 w-32 rounded-full bg-[#ef2da4]/[.16] blur-3xl" />
-        <div className="relative grid grid-cols-[112px_1fr] items-center gap-3 min-[390px]:grid-cols-[132px_1fr] min-[390px]:gap-4">
-          <motion.div
-            animate={reduceMotion ? undefined : { rotate: 0, scale: 1 }}
-            className="relative grid aspect-square place-items-center rounded-full shadow-[0_16px_42px_rgba(139,44,255,.22)]"
-            initial={reduceMotion ? false : { rotate: -24, scale: 0.92 }}
-            style={{ background: donutGradient }}
-            transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="grid h-[68%] w-[68%] place-items-center rounded-full border border-white/[.08] bg-[#0b0712] text-center shadow-[inset_0_1px_0_rgba(255,255,255,.08)]">
-              <div>
-                <p className="text-[clamp(20px,6vw,26px)] font-black leading-none">
-                  {formatMoney(totals.spendTotal)}
-                </p>
-                <p className="mt-1 text-xs font-semibold text-[#d9c8ff]/62">
-                  Total Spend
-                </p>
+      <div className="relative overflow-hidden rounded-[26px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(42,12,78,.76),rgba(12,7,23,.94))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.10),0_18px_48px_rgba(0,0,0,.22)]">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full bg-[#ef2da4]/[.18] blur-3xl" />
+        <div className="relative space-y-4">
+          <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.13em] text-[#d9c8ff]/52">
+                Top category
+              </p>
+              <div className="mt-2 flex min-w-0 items-center gap-3">
+                <span
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-2xl shadow-[0_12px_30px_rgba(0,0,0,.20)]"
+                  style={{
+                    background: `linear-gradient(135deg,${topCategory?.color || '#8b2cff'},rgba(16,7,27,.88))`,
+                  }}
+                >
+                  <TopIcon />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-black">
+                    {topCategory?.total ? topCategory.label : 'No spending yet'}
+                  </p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#d9c8ff]/58">
+                    {topCategory?.total
+                      ? `${topCategory.percentage}% of this period`
+                      : 'Add an expense to build the view'}
+                  </p>
+                </div>
               </div>
             </div>
-          </motion.div>
+            <div className="rounded-[18px] border border-white/[.08] bg-white/[.055] px-3 py-2 text-right">
+              <p className="text-[11px] font-bold text-[#d9c8ff]/58">Total spend</p>
+              <p className="tabular-nums mt-1 text-lg font-black">
+                {formatMoney(totals.spendTotal)}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <InsightChip
+              label="Spend load"
+              tone={spendLoad <= 75 ? 'good' : 'bad'}
+              value={`${spendLoad}%`}
+            />
+            <InsightChip
+              label="Card share"
+              tone={cardShare <= 40 ? 'good' : 'bad'}
+              value={`${cardShare}%`}
+            />
+          </div>
 
           <div className="space-y-2.5">
-            {categoryTotals.map((category, index) => {
-              const barWidth = totals.spendTotal
-                ? Math.max(category.percentage, 5)
-                : 4
-
-              return (
-              <motion.div
-                className="rounded-2xl border border-white/[.06] bg-white/[.035] p-2.5"
-                initial={reduceMotion ? false : { opacity: 0, x: 12 }}
+            {sortedCategories.map(category => (
+              <CategorySpendRow
+                category={category}
                 key={category.id}
-                animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
-                transition={{
-                  delay: reduceMotion ? 0 : 0.08 + index * 0.045,
-                  duration: 0.32,
-                }}
-              >
-                <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 text-sm">
-                  <span className="flex min-w-0 items-center gap-2 font-bold text-[#efe8ff]">
-                    <span
-                      className="h-3.5 w-3.5 shrink-0 rounded-full shadow-[0_0_18px_currentColor]"
-                      style={{ background: category.color, color: category.color }}
-                    />
-                    <span className="truncate">{category.label}</span>
-                  </span>
-                  <span className="text-right text-[13px] font-black">
-                    {formatMoney(category.total)}
-                  </span>
-                  <span className="w-10 text-right text-[13px] font-bold text-[#d9c8ff]/66">
-                    {category.percentage}%
-                  </span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[.07]">
-                  <motion.span
-                    animate={reduceMotion ? undefined : { width: `${barWidth}%` }}
-                    className="block h-full rounded-full"
-                    initial={reduceMotion ? false : { width: 0 }}
-                    style={{ background: `linear-gradient(90deg,${category.color},#f6a1ff)` }}
-                    transition={{ delay: 0.14 + index * 0.04, duration: 0.48 }}
-                  />
-                </div>
-              </motion.div>
-              )
-            })}
+                totalSpend={totals.spendTotal}
+              />
+            ))}
           </div>
         </div>
       </div>
     </motion.section>
+  )
+}
+
+function CategorySpendRow({ category, totalSpend }) {
+  const Icon = category.icon
+  const width = category.total > 0
+    ? Math.max(8, Math.round((category.total / totalSpend) * 100))
+    : 2
+
+  return (
+    <div className="rounded-[18px] border border-white/[.07] bg-white/[.04] p-3">
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-lg"
+            style={{
+              background: `linear-gradient(135deg,${category.color},rgba(16,7,27,.88))`,
+            }}
+          >
+            <Icon />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-[#f4edff]">
+              {category.label}
+            </p>
+            <p className="mt-0.5 text-[11px] font-bold text-[#d9c8ff]/52">
+              {category.percentage}% of spend
+            </p>
+          </div>
+        </div>
+        <p className="tabular-nums text-sm font-black">
+          {formatMoney(category.total)}
+        </p>
+      </div>
+      <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/[.07]">
+        <span
+          className="block h-full rounded-full shadow-[0_0_16px_currentColor]"
+          style={{
+            width: `${width}%`,
+            background: `linear-gradient(90deg,${category.color},#f6a1ff)`,
+            color: category.color,
+          }}
+        />
+      </div>
+    </div>
   )
 }
 
