@@ -61,6 +61,9 @@ Build output directory: .vercel/output/static
 
 The `build` script runs the pinned Cloudflare Next adapter from `package-lock.json`,
 so Pages will create the correct output directory during deployment.
+`vercel.json` is present only because the Cloudflare adapter internally runs
+Vercel's build engine; it tells that internal step to run plain `next build`
+instead of recursively calling the Cloudflare adapter again.
 
 `wrangler.toml` also declares `pages_build_output_dir = ".vercel/output/static"`
 so Cloudflare no longer treats the config as invalid.
