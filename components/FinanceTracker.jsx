@@ -14,7 +14,6 @@ import {
   FiList,
   FiMoreHorizontal,
   FiPieChart,
-  FiPlus,
   FiRefreshCcw,
   FiSettings,
   FiShoppingBag,
@@ -546,14 +545,14 @@ export default function FinanceTracker() {
   const openCardModal = useCallback(() => setCardModalOpen(true), [])
   const closeCardModal = useCallback(() => setCardModalOpen(false), [])
 
-  const openFirstCardSpend = useCallback(() => {
+  const openSelectedCardSpend = useCallback((cardId) => {
     closeCardModal()
-    openTransactionModal('expense', cards[0]?.id || 'cash')
+    openTransactionModal('expense', cardId || cards[0]?.id || 'cash')
   }, [cards, closeCardModal, openTransactionModal])
 
-  const openFirstCardIncome = useCallback(() => {
+  const openSelectedCardIncome = useCallback((cardId) => {
     closeCardModal()
-    openTransactionModal('income', cards[0]?.id || 'cash')
+    openTransactionModal('income', cardId || cards[0]?.id || 'cash')
   }, [cards, closeCardModal, openTransactionModal])
 
   const handleAddTransaction = event => {
@@ -867,8 +866,8 @@ export default function FinanceTracker() {
             cards={cards}
             close={closeCardModal}
             handleAddCard={handleAddCard}
-            onAddSpend={openFirstCardSpend}
-            onAddIncome={openFirstCardIncome}
+            onAddSpend={openSelectedCardSpend}
+            onAddIncome={openSelectedCardIncome}
             setCardForm={setCardForm}
           />
         )}
@@ -882,18 +881,8 @@ const Header = memo(function Header({ syncStatus }) {
     <header className="px-5 pb-3 pt-[max(24px,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)] text-2xl text-white shadow-[0_8px_24px_rgba(142,34,255,.35)] ring-1 ring-white/10">
-            <svg
-              aria-hidden="true"
-              className="h-6 w-6"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" />
-            </svg>
-          </span>
           <div className="min-w-0">
-            <h1 className="truncate text-[26px] font-black leading-none tracking-tight">
+            <h1 className="brand-title truncate text-[30px] font-extrabold leading-none">
               Family Guy
             </h1>
             {syncStatus && (
@@ -1134,12 +1123,12 @@ const HomeView = memo(function HomeView({
             onClick={() => openTransactionModal('income')}
           />
           <motion.button
-            onClick={() => openTransactionModal('expense')}
-            aria-label="Add transaction"
-            className="finance-fab-pulse grid aspect-square place-items-center rounded-full bg-[radial-gradient(circle_at_32%_24%,#f58bff,#a735ff_50%,#ef2da4)] text-6xl text-white shadow-[0_18px_42px_rgba(195,47,255,.45)] transition hover:brightness-110 active:scale-95"
+            onClick={openCardModal}
+            aria-label="Credit card actions"
+            className="finance-fab-pulse grid aspect-square place-items-center rounded-full bg-[radial-gradient(circle_at_32%_24%,#f58bff,#a735ff_50%,#ef2da4)] text-[46px] text-white shadow-[0_18px_42px_rgba(195,47,255,.45)] transition hover:brightness-110 active:scale-95"
             whileTap={{ scale: 0.94 }}
           >
-            <FiPlus />
+            <FiCreditCard />
           </motion.button>
           <QuickButton
             icon={<FiArrowUpRight />}
@@ -1991,6 +1980,18 @@ function CardModal({
   setCardForm,
 }) {
   const reduceMotion = useReducedMotion()
+  const [selectedCardId, setSelectedCardId] = useState(cards[0]?.id || '')
+
+  useEffect(() => {
+    if (!cards.length) {
+      setSelectedCardId('')
+      return
+    }
+
+    setSelectedCardId(current =>
+      current && cards.some(card => card.id === current) ? current : cards[0].id,
+    )
+  }, [cards])
 
   return (
     <motion.div
@@ -2026,11 +2027,18 @@ function CardModal({
             const usage = card.limit
               ? Math.min(100, Math.round((card.balance / card.limit) * 100))
               : 0
+            const selected = selectedCardId === card.id
 
             return (
-              <article
-                className="rounded-[20px] border border-white/10 bg-white/[.045] p-4"
+              <button
+                className={`w-full rounded-[20px] border p-4 text-left transition active:scale-[.99] ${
+                  selected
+                    ? 'border-fuchsia-200/45 bg-fuchsia-300/[.10] shadow-[0_14px_34px_rgba(214,92,255,.16)]'
+                    : 'border-white/[.10] bg-white/[.045]'
+                }`}
                 key={card.id}
+                onClick={() => setSelectedCardId(card.id)}
+                type="button"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -2039,7 +2047,14 @@ function CardModal({
                       {usage}% limit used
                     </p>
                   </div>
-                  <p className="tabular-nums font-black">{formatMoney(card.balance)}</p>
+                  <div className="text-right">
+                    <p className="tabular-nums font-black">{formatMoney(card.balance)}</p>
+                    {selected && (
+                      <p className="mt-1 text-[11px] font-black uppercase text-fuchsia-100/80">
+                        Selected
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
                   <span
@@ -2050,7 +2065,7 @@ function CardModal({
                     }}
                   />
                 </div>
-              </article>
+              </button>
             )
           })}
         </div>
@@ -2059,8 +2074,8 @@ function CardModal({
           <button
             aria-label="Add credit card income"
             className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-3 text-sm font-black text-emerald-100 disabled:cursor-not-allowed disabled:opacity-45"
-            disabled={cards.length === 0}
-            onClick={onAddIncome}
+            disabled={!selectedCardId}
+            onClick={() => onAddIncome(selectedCardId)}
             type="button"
           >
             <FiArrowDownLeft />
@@ -2069,8 +2084,8 @@ function CardModal({
           <button
             aria-label="Add credit card expense"
             className="flex items-center justify-center gap-2 rounded-2xl border border-pink-300/20 bg-pink-400/10 px-3 py-3 text-sm font-black text-pink-100 disabled:cursor-not-allowed disabled:opacity-45"
-            disabled={cards.length === 0}
-            onClick={onAddSpend}
+            disabled={!selectedCardId}
+            onClick={() => onAddSpend(selectedCardId)}
             type="button"
           >
             <FiArrowUpRight />

@@ -1,7 +1,13 @@
 import './globals.css'
-import { Manrope } from 'next/font/google'
+import { Fraunces, Manrope } from 'next/font/google'
 
 const manrope = Manrope({ subsets: ['latin'] })
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-brand',
+  weight: ['700', '800'],
+})
 
 export const metadata = {
   title: 'Family Guy Finance',
@@ -38,7 +44,7 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#170624" />
       </head>
-      <body className={manrope.className}>{children}</body>
+      <body className={`${manrope.className} ${fraunces.variable}`}>{children}</body>
     </html>
   )
 }

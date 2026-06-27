@@ -161,6 +161,12 @@ textarea {
   will-change: transform, opacity;
 }
 
+.brand-title {
+  font-family: var(--font-brand), Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+}
+
 @layer components {
   .finance-surface {
     @apply rounded-[22px] border border-white/[.12] bg-[linear-gradient(155deg,rgba(47,12,77,.72),rgba(16,7,27,.84))] shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_14px_34px_rgba(0,0,0,.18)] backdrop-blur-xl;

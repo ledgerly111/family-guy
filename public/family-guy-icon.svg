@@ -1,27 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Family Guy Finance icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Family Guy Finance home icon">
   <defs>
-    <linearGradient id="bg" x1="70" x2="440" y1="40" y2="470" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bg" x1="64" x2="448" y1="40" y2="472" gradientUnits="userSpaceOnUse">
       <stop stop-color="#8b2cff"/>
-      <stop offset="0.52" stop-color="#d732ff"/>
+      <stop offset="0.48" stop-color="#d72eff"/>
       <stop offset="1" stop-color="#f02ca6"/>
     </linearGradient>
-    <linearGradient id="coin" x1="160" x2="370" y1="150" y2="370" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff7c5"/>
-      <stop offset="0.42" stop-color="#ffcc3d"/>
-      <stop offset="1" stop-color="#ff8a3d"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#220035" flood-opacity="0.35"/>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientTransform="matrix(232 256 -256 232 160 96)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.46"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-24%" y="-24%" width="148%" height="148%">
+      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#24003d" flood-opacity="0.42"/>
     </filter>
   </defs>
-  <rect width="512" height="512" rx="118" fill="#10051b"/>
+  <rect width="512" height="512" rx="118" fill="#0c0414"/>
   <rect x="28" y="28" width="456" height="456" rx="104" fill="url(#bg)" filter="url(#shadow)"/>
-  <circle cx="256" cy="262" r="142" fill="#160925" opacity="0.82"/>
-  <circle cx="256" cy="262" r="116" fill="url(#coin)"/>
-  <path fill="#160925" d="M256 132l23 72h76l-61 44 24 72-62-45-62 45 24-72-61-44h76z"/>
-  <path fill="#fff" fill-opacity="0.95" d="M160 357c11-45 45-74 86-74h20c41 0 75 29 86 74 3 13-7 25-20 25H180c-13 0-23-12-20-25z"/>
-  <circle cx="210" cy="237" r="34" fill="#fff"/>
-  <circle cx="302" cy="237" r="34" fill="#fff"/>
-  <path fill="#160925" d="M198 234a12 12 0 1124 0 12 12 0 01-24 0zm92 0a12 12 0 1124 0 12 12 0 01-24 0z"/>
-  <path fill="none" stroke="#160925" stroke-linecap="round" stroke-width="18" d="M211 326c26 22 64 22 90 0"/>
+  <rect x="28" y="28" width="456" height="456" rx="104" fill="url(#shine)"/>
+  <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="35" d="M142 260 256 156l114 104"/>
+  <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="35" d="M178 250v112c0 18 14 32 32 32h92c18 0 32-14 32-32V250"/>
+  <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="31" d="M255 394v-78"/>
+  <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-opacity="0.52" stroke-width="18" d="M386 123h25"/>
 </svg>
