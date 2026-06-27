@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   FiArrowDownLeft,
   FiArrowUpRight,
@@ -80,6 +80,32 @@ const tabPanelVariants = {
     opacity: 0,
     y: -6,
     transition: { duration: 0.18, ease: 'easeIn' },
+  },
+}
+const modalOverlayVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { duration: 0.12, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1, ease: 'easeIn' },
+  },
+}
+const modalSheetVariants = {
+  hidden: { opacity: 0, y: 18, scale: 0.985 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: 12,
+    scale: 0.992,
+    transition: { duration: 0.12, ease: 'easeIn' },
   },
 }
 
@@ -501,7 +527,7 @@ export default function FinanceTracker() {
     return `conic-gradient(${segments.join(', ') || '#1f2a24 0deg 360deg'})`
   }, [categoryTotals, totals.spendTotal])
 
-  const openTransactionModal = (type, preferredAccountId = 'cash') => {
+  const openTransactionModal = useCallback((type, preferredAccountId = 'cash') => {
     setForm(current => ({
       ...current,
       title: '',
@@ -514,9 +540,21 @@ export default function FinanceTracker() {
       accountId: preferredAccountId,
     }))
     setTransactionModal(type)
-  }
+  }, [cards])
 
-  const closeTransactionModal = () => setTransactionModal(null)
+  const closeTransactionModal = useCallback(() => setTransactionModal(null), [])
+  const openCardModal = useCallback(() => setCardModalOpen(true), [])
+  const closeCardModal = useCallback(() => setCardModalOpen(false), [])
+
+  const openFirstCardSpend = useCallback(() => {
+    closeCardModal()
+    openTransactionModal('expense', cards[0]?.id || 'cash')
+  }, [cards, closeCardModal, openTransactionModal])
+
+  const openFirstCardIncome = useCallback(() => {
+    closeCardModal()
+    openTransactionModal('income', cards[0]?.id || 'cash')
+  }, [cards, closeCardModal, openTransactionModal])
 
   const handleAddTransaction = event => {
     event.preventDefault()
@@ -723,7 +761,7 @@ export default function FinanceTracker() {
                     cards={cards}
                     categoryTotals={categoryTotals}
                     donutGradient={donutGradient}
-                    openCardModal={() => setCardModalOpen(true)}
+                    openCardModal={openCardModal}
                     openTransactionModal={openTransactionModal}
                     period={period}
                     setPeriod={setPeriod}
@@ -827,16 +865,10 @@ export default function FinanceTracker() {
           <CardModal
             cardForm={cardForm}
             cards={cards}
-            close={() => setCardModalOpen(false)}
+            close={closeCardModal}
             handleAddCard={handleAddCard}
-            onAddSpend={() => {
-              setCardModalOpen(false)
-              openTransactionModal('expense', cards[0]?.id || 'cash')
-            }}
-            onAddIncome={() => {
-              setCardModalOpen(false)
-              openTransactionModal('income', cards[0]?.id || 'cash')
-            }}
+            onAddSpend={openFirstCardSpend}
+            onAddIncome={openFirstCardIncome}
             setCardForm={setCardForm}
           />
         )}
@@ -845,7 +877,7 @@ export default function FinanceTracker() {
   )
 }
 
-function Header({ syncStatus }) {
+const Header = memo(function Header({ syncStatus }) {
   return (
     <header className="px-5 pb-3 pt-[max(24px,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between gap-3">
@@ -880,7 +912,7 @@ function Header({ syncStatus }) {
       </div>
     </header>
   )
-}
+})
 
 function AuthScreen({ onAuthenticated, syncStatus }) {
   const [mode, setMode] = useState('login')
@@ -1029,7 +1061,7 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
   )
 }
 
-function HomeView({
+const HomeView = memo(function HomeView({
   cards,
   categoryTotals,
   donutGradient,
@@ -1144,7 +1176,7 @@ function HomeView({
       />
     </motion.div>
   )
-}
+})
 
 function MetricCard({ accent, change, icon, label, meta, sublabel, value }) {
   const tone = {
@@ -1787,27 +1819,28 @@ function TransactionModal({
     const focusTimer = window.setTimeout(() => {
       amountInputRef.current?.focus()
       amountInputRef.current?.select()
-    }, 80)
+    }, 40)
 
     return () => window.clearTimeout(focusTimer)
   }, [type])
 
   return (
     <motion.div
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-md"
-      exit={{ opacity: 0 }}
-      initial={{ opacity: 0 }}
+      animate={reduceMotion ? undefined : 'show'}
+      className="finance-modal-overlay fixed inset-0 z-[80] grid place-items-end bg-[#030108]/82 px-3 pb-3"
+      exit={reduceMotion ? undefined : 'exit'}
+      initial={reduceMotion ? false : 'hidden'}
       onClick={closeTransactionModal}
+      variants={modalOverlayVariants}
     >
       <motion.form
-        animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
-        className="mx-auto w-full max-w-[430px] rounded-[28px] border border-white/12 bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
-        exit={reduceMotion ? undefined : { y: 28, opacity: 0 }}
-        initial={reduceMotion ? false : { y: 28, opacity: 0 }}
+        animate={reduceMotion ? undefined : 'show'}
+        className="finance-modal-sheet mx-auto w-full max-w-[430px] rounded-[28px] border border-white/[.12] bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
+        exit={reduceMotion ? undefined : 'exit'}
+        initial={reduceMotion ? false : 'hidden'}
         onClick={event => event.stopPropagation()}
         onSubmit={handleAddTransaction}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        variants={modalSheetVariants}
       >
         <span className="mx-auto mb-4 block h-1 w-10 rounded-full bg-white/20" />
         <ModalHeader
@@ -1961,19 +1994,20 @@ function CardModal({
 
   return (
     <motion.div
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-md"
-      exit={{ opacity: 0 }}
-      initial={{ opacity: 0 }}
+      animate={reduceMotion ? undefined : 'show'}
+      className="finance-modal-overlay fixed inset-0 z-[80] grid place-items-end bg-[#030108]/82 px-3 pb-3"
+      exit={reduceMotion ? undefined : 'exit'}
+      initial={reduceMotion ? false : 'hidden'}
       onClick={close}
+      variants={modalOverlayVariants}
     >
       <motion.div
-        animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
-        className="mx-auto w-full max-w-[430px] rounded-[28px] border border-white/12 bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
-        exit={reduceMotion ? undefined : { y: 28, opacity: 0 }}
-        initial={reduceMotion ? false : { y: 28, opacity: 0 }}
+        animate={reduceMotion ? undefined : 'show'}
+        className="finance-modal-sheet mx-auto w-full max-w-[430px] rounded-[28px] border border-white/[.12] bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
+        exit={reduceMotion ? undefined : 'exit'}
+        initial={reduceMotion ? false : 'hidden'}
         onClick={event => event.stopPropagation()}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        variants={modalSheetVariants}
       >
         <span className="mx-auto mb-4 block h-1 w-10 rounded-full bg-white/20" />
         <ModalHeader close={close} title="Credit Cards" />
@@ -2110,7 +2144,7 @@ function ModalHeader({ close, title }) {
   )
 }
 
-function BottomNav({ activeTab, setActiveTab }) {
+const BottomNav = memo(function BottomNav({ activeTab, setActiveTab }) {
   const reduceMotion = useReducedMotion()
   const items = [
     { id: 'home', label: 'Home', icon: FiHome },
@@ -2155,7 +2189,7 @@ function BottomNav({ activeTab, setActiveTab }) {
       </div>
     </motion.nav>
   )
-}
+})
 
 function PeriodSelect({ compact = false, period, setPeriod }) {
   return (

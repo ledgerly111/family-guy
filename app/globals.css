@@ -37,6 +37,13 @@ body {
   color: #fff;
 }
 
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
@@ -142,6 +149,16 @@ body {
 
 .finance-loader-progress span:nth-child(4) {
   animation-delay: 0.36s;
+}
+
+.finance-modal-overlay {
+  contain: layout style paint;
+}
+
+.finance-modal-sheet {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 @layer components {
