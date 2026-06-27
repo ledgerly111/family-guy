@@ -1,6 +1,6 @@
 const sessionCookieName = 'fg_session'
 const sessionDays = 30
-const iterations = 210000
+const iterations = 60000
 const keyLength = 32
 const digest = 'sha256'
 const encoder = new TextEncoder()
@@ -41,6 +41,25 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,
 ]
 
+const repairStatements = [
+  `ALTER TABLE families ADD COLUMN name TEXT NOT NULL DEFAULT 'Family Guy'`,
+  `ALTER TABLE families ADD COLUMN created_at TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN family_id TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT 'Family member'`,
+  `ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'`,
+  `ALTER TABLE users ADD COLUMN created_at TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE sessions ADD COLUMN user_id TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE sessions ADD COLUMN token_hash TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE sessions ADD COLUMN expires_at TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE sessions ADD COLUMN created_at TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE family_state ADD COLUMN transactions_json TEXT NOT NULL DEFAULT '[]'`,
+  `ALTER TABLE family_state ADD COLUMN cards_json TEXT NOT NULL DEFAULT '[]'`,
+  `ALTER TABLE family_state ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'`,
+  `ALTER TABLE family_state ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`,
+]
+
 function getDb(env) {
   if (!env.DB) {
     throw new Error('Cloudflare D1 binding "DB" is missing.')
@@ -51,6 +70,18 @@ function getDb(env) {
 
 function json(data, status = 200) {
   return Response.json(data, { status })
+}
+
+export function withErrors(handler) {
+  return async context => {
+    try {
+      return await handler(context)
+    } catch (error) {
+      const message = error?.message || 'Unexpected server error'
+      const status = message.includes('D1 binding') ? 503 : 500
+      return json({ error: message }, status)
+    }
+  }
 }
 
 function parseCookie(request, name) {
@@ -157,6 +188,10 @@ async function createPasswordHash(password) {
 
 async function verifyPassword(password, storedHash) {
   const [scheme, storedDigest, storedIterations, salt, hash] = String(storedHash || '').split(':')
+  if (scheme === 'sha256' && salt && hash) {
+    return safeEqual(await hashToken(`${salt}:${String(password)}`), hash)
+  }
+
   if (scheme !== 'pbkdf2' || !storedDigest || !storedIterations || !salt || !hash) {
     return false
   }
@@ -170,6 +205,10 @@ function createSessionToken() {
 }
 
 async function hashSessionToken(token) {
+  return hashToken(token)
+}
+
+async function hashToken(token) {
   const hash = await crypto.subtle.digest('SHA-256', encoder.encode(String(token)))
   return base64UrlEncode(new Uint8Array(hash))
 }
@@ -228,6 +267,15 @@ export async function ensureSchema(env) {
   const db = getDb(env)
   for (const statement of schemaStatements) {
     await db.prepare(statement).run()
+  }
+  for (const statement of repairStatements) {
+    try {
+      await db.prepare(statement).run()
+    } catch (error) {
+      if (!String(error?.message || '').toLowerCase().includes('duplicate column')) {
+        throw error
+      }
+    }
   }
 }
 

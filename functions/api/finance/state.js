@@ -1,4 +1,4 @@
-import { handleFinanceState } from '../../_lib/backend.js'
+import { handleFinanceState, withErrors } from '../../_lib/backend.js'
 
-export const onRequestGet = handleFinanceState
-export const onRequestPut = handleFinanceState
+export const onRequestGet = withErrors(handleFinanceState)
+export const onRequestPut = withErrors(handleFinanceState)

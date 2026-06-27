@@ -1,4 +1,4 @@
-import { handleMembers } from '../../_lib/backend.js'
+import { handleMembers, withErrors } from '../../_lib/backend.js'
 
-export const onRequestGet = handleMembers
-export const onRequestPost = handleMembers
+export const onRequestGet = withErrors(handleMembers)
+export const onRequestPost = withErrors(handleMembers)

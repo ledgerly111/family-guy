@@ -1,3 +1,3 @@
-import { handleLogout } from '../../_lib/backend.js'
+import { handleLogout, withErrors } from '../../_lib/backend.js'
 
-export const onRequestPost = handleLogout
+export const onRequestPost = withErrors(handleLogout)

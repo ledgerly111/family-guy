@@ -1,3 +1,3 @@
-import { handleRegister } from '../../_lib/backend.js'
+import { handleRegister, withErrors } from '../../_lib/backend.js'
 
-export const onRequestPost = handleRegister
+export const onRequestPost = withErrors(handleRegister)

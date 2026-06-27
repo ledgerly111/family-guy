@@ -1,3 +1,3 @@
-import { handleMe } from '../../_lib/backend.js'
+import { handleMe, withErrors } from '../../_lib/backend.js'
 
-export const onRequestGet = handleMe
+export const onRequestGet = withErrors(handleMe)
