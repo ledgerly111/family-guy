@@ -22,7 +22,7 @@ import {
   FiTruck,
   FiX,
 } from 'react-icons/fi'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { MdFastfood } from 'react-icons/md'
 import { TbPigMoney } from 'react-icons/tb'
 
@@ -69,6 +69,19 @@ const modalFieldClass =
   'finance-field mt-2 w-full rounded-2xl border border-white/12 px-4 py-3 font-bold outline-none transition focus:border-[#d65cff] focus:ring-2 focus:ring-[#d65cff]/30'
 const modalSelectClass =
   'finance-select mt-2 w-full rounded-2xl border border-white/12 px-3 py-3 text-sm font-bold outline-none transition focus:border-[#d65cff] focus:ring-2 focus:ring-[#d65cff]/30'
+const tabPanelVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    transition: { duration: 0.18, ease: 'easeIn' },
+  },
+}
 
 const createDate = (offsetDays = 0) => {
   const date = new Date()
@@ -633,9 +646,21 @@ export default function FinanceTracker() {
       <main className="min-h-screen bg-[#06040d] text-white">
         <div className="mx-auto grid min-h-screen w-full max-w-[430px] place-items-center bg-[radial-gradient(circle_at_18%_0%,rgba(176,40,255,.42),transparent_34%),linear-gradient(180deg,#170624_0%,#050409_100%)]">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)]" />
-            <p className="mt-4 text-sm font-black uppercase tracking-[0.22em] text-white/60">
+            <div className="finance-shimmer mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)] shadow-[0_14px_34px_rgba(151,48,255,.35)]">
+              <svg
+                aria-hidden="true"
+                className="h-7 w-7 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" />
+              </svg>
+            </div>
+            <p className="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#d9c8ff]/60">
               Loading ledger
+            </p>
+            <p className="mt-2 text-xs font-semibold text-[#d9c8ff]/42">
+              Syncing your family finances
             </p>
           </div>
         </div>
@@ -651,111 +676,150 @@ export default function FinanceTracker() {
     <main className="min-h-screen bg-[#06040d] text-white">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-[radial-gradient(circle_at_18%_0%,rgba(176,40,255,.42),transparent_34%),radial-gradient(circle_at_86%_14%,rgba(236,43,157,.24),transparent_28%),linear-gradient(180deg,#170624_0%,#080410_46%,#050409_100%)] shadow-2xl shadow-black/60">
         <div className="relative min-h-screen pb-36">
-          <Header />
+          <Header syncStatus={syncStatus} />
 
           <section className="px-5">
-            {activeTab === 'home' && (
-              <HomeView
-                cards={cards}
-                categoryTotals={categoryTotals}
-                donutGradient={donutGradient}
-                openCardModal={() => setCardModalOpen(true)}
-                openTransactionModal={openTransactionModal}
-                period={period}
-                setPeriod={setPeriod}
-                totals={totals}
-              />
-            )}
+            <AnimatePresence mode="wait">
+              {activeTab === 'home' && (
+                <motion.div
+                  animate="show"
+                  exit="exit"
+                  initial="hidden"
+                  key="home"
+                  variants={tabPanelVariants}
+                >
+                  <HomeView
+                    cards={cards}
+                    categoryTotals={categoryTotals}
+                    donutGradient={donutGradient}
+                    openCardModal={() => setCardModalOpen(true)}
+                    openTransactionModal={openTransactionModal}
+                    period={period}
+                    setPeriod={setPeriod}
+                    totals={totals}
+                  />
+                </motion.div>
+              )}
 
-            {activeTab === 'transactions' && (
-              <TransactionsView
-                categoryFilter={categoryFilter}
-                familyMembers={familyMembers}
-                filteredTransactions={filteredTransactions}
-                handleDeleteTransaction={handleDeleteTransaction}
-                memberFilter={memberFilter}
-                period={period}
-                setCategoryFilter={setCategoryFilter}
-                setMemberFilter={setMemberFilter}
-                setPeriod={setPeriod}
-                totals={totals}
-              />
-            )}
+              {activeTab === 'transactions' && (
+                <motion.div
+                  animate="show"
+                  exit="exit"
+                  initial="hidden"
+                  key="transactions"
+                  variants={tabPanelVariants}
+                >
+                  <TransactionsView
+                    categoryFilter={categoryFilter}
+                    familyMembers={familyMembers}
+                    filteredTransactions={filteredTransactions}
+                    handleDeleteTransaction={handleDeleteTransaction}
+                    memberFilter={memberFilter}
+                    period={period}
+                    setCategoryFilter={setCategoryFilter}
+                    setMemberFilter={setMemberFilter}
+                    setPeriod={setPeriod}
+                    totals={totals}
+                  />
+                </motion.div>
+              )}
 
-            {activeTab === 'reports' && (
-              <ReportsView
-                categoryTotals={categoryTotals}
-                memberTotals={memberTotals}
-                period={period}
-                setPeriod={setPeriod}
-                totals={totals}
-              />
-            )}
+              {activeTab === 'reports' && (
+                <motion.div
+                  animate="show"
+                  exit="exit"
+                  initial="hidden"
+                  key="reports"
+                  variants={tabPanelVariants}
+                >
+                  <ReportsView
+                    categoryTotals={categoryTotals}
+                    memberTotals={memberTotals}
+                    period={period}
+                    setPeriod={setPeriod}
+                    totals={totals}
+                  />
+                </motion.div>
+              )}
 
-            {activeTab === 'settings' && (
-              <SettingsView
-                auth={auth}
-                familyMembers={familyMembers}
-                handleAddMember={handleAddMember}
-                handleInstallApp={handleInstallApp}
-                handleLogout={handleLogout}
-                installHelpOpen={installHelpOpen}
-                installPromptAvailable={Boolean(installPrompt)}
-                isInstalled={isInstalled}
-                memberForm={memberForm}
-                memberInvite={memberInvite}
-                resetData={resetData}
-                setMemberForm={setMemberForm}
-                setSettings={setSettings}
-                settings={settings}
-                syncStatus={syncStatus}
-              />
-            )}
+              {activeTab === 'settings' && (
+                <motion.div
+                  animate="show"
+                  exit="exit"
+                  initial="hidden"
+                  key="settings"
+                  variants={tabPanelVariants}
+                >
+                  <SettingsView
+                    auth={auth}
+                    familyMembers={familyMembers}
+                    handleAddMember={handleAddMember}
+                    handleInstallApp={handleInstallApp}
+                    handleLogout={handleLogout}
+                    installHelpOpen={installHelpOpen}
+                    installPromptAvailable={Boolean(installPrompt)}
+                    isInstalled={isInstalled}
+                    memberForm={memberForm}
+                    memberInvite={memberInvite}
+                    resetData={resetData}
+                    setMemberForm={setMemberForm}
+                    setSettings={setSettings}
+                    settings={settings}
+                    syncStatus={syncStatus}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
       </div>
 
-      {transactionModal && (
-        <TransactionModal
-          cards={cards}
-          closeTransactionModal={closeTransactionModal}
-          familyMembers={familyMembers}
-          form={form}
-          handleAddTransaction={handleAddTransaction}
-          setForm={setForm}
-          type={transactionModal}
-        />
-      )}
+      <AnimatePresence>
+        {transactionModal && (
+          <TransactionModal
+            cards={cards}
+            closeTransactionModal={closeTransactionModal}
+            familyMembers={familyMembers}
+            form={form}
+            handleAddTransaction={handleAddTransaction}
+            key={transactionModal}
+            setForm={setForm}
+            type={transactionModal}
+          />
+        )}
+      </AnimatePresence>
 
-      {cardModalOpen && (
-        <CardModal
-          cardForm={cardForm}
-          cards={cards}
-          close={() => setCardModalOpen(false)}
-          handleAddCard={handleAddCard}
-          onAddSpend={() => {
-            setCardModalOpen(false)
-            openTransactionModal('expense', cards[0]?.id || 'cash')
-          }}
-          onAddIncome={() => {
-            setCardModalOpen(false)
-            openTransactionModal('income', cards[0]?.id || 'cash')
-          }}
-          setCardForm={setCardForm}
-        />
-      )}
+      <AnimatePresence>
+        {cardModalOpen && (
+          <CardModal
+            cardForm={cardForm}
+            cards={cards}
+            close={() => setCardModalOpen(false)}
+            handleAddCard={handleAddCard}
+            onAddSpend={() => {
+              setCardModalOpen(false)
+              openTransactionModal('expense', cards[0]?.id || 'cash')
+            }}
+            onAddIncome={() => {
+              setCardModalOpen(false)
+              openTransactionModal('income', cards[0]?.id || 'cash')
+            }}
+            setCardForm={setCardForm}
+          />
+        )}
+      </AnimatePresence>
     </main>
   )
 }
 
-function Header() {
+function Header({ syncStatus }) {
   return (
-    <header className="px-5 pb-2 pt-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)] text-2xl text-white shadow-[0_8px_24px_rgba(142,34,255,.35)]">
+    <header className="px-5 pb-3 pt-[max(24px,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)] text-2xl text-white shadow-[0_8px_24px_rgba(142,34,255,.35)] ring-1 ring-white/10">
             <svg
               aria-hidden="true"
               className="h-6 w-6"
@@ -765,13 +829,20 @@ function Header() {
               <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" />
             </svg>
           </span>
-          <h1 className="text-[26px] font-black leading-none tracking-tight">
-            Family Guy
-          </h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-[26px] font-black leading-none tracking-tight">
+              Family Guy
+            </h1>
+            {syncStatus && (
+              <p className="mt-1 truncate text-[11px] font-bold uppercase tracking-[0.16em] text-[#d9c8ff]/52">
+                {syncStatus}
+              </p>
+            )}
+          </div>
         </div>
         <button
           aria-label="Notifications"
-          className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[.055] text-[22px] text-white/90"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.055] text-[22px] text-white/90 transition hover:border-white/18 hover:bg-white/[.08] active:scale-95"
         >
           <FiBell />
         </button>
@@ -820,7 +891,12 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
   return (
     <main className="min-h-screen bg-[#06040d] text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-[430px] items-center px-5 py-8 bg-[radial-gradient(circle_at_18%_0%,rgba(176,40,255,.42),transparent_34%),radial-gradient(circle_at_86%_14%,rgba(236,43,157,.24),transparent_28%),linear-gradient(180deg,#170624_0%,#080410_46%,#050409_100%)]">
-        <section className="w-full rounded-[30px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(42,12,78,.78),rgba(12,7,23,.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.1),0_24px_80px_rgba(0,0,0,.35)] backdrop-blur-2xl">
+        <motion.section
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full rounded-[30px] border border-white/[.14] bg-[linear-gradient(145deg,rgba(42,12,78,.78),rgba(12,7,23,.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.1),0_24px_80px_rgba(0,0,0,.35)] backdrop-blur-2xl"
+          initial={{ opacity: 0, y: 18 }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="flex items-center gap-3">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,#8e22ff,#ec2b9d)] text-2xl shadow-[0_14px_34px_rgba(151,48,255,.35)]">
               <FiHome />
@@ -909,14 +985,14 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
             )}
 
             <button
-              className="w-full rounded-2xl bg-[linear-gradient(135deg,#8b2cff,#f02ca6)] py-3.5 text-sm font-black text-white shadow-[0_14px_30px_rgba(151,48,255,.28)] disabled:opacity-60"
+              className="finance-btn-primary w-full py-3.5 text-sm disabled:opacity-60"
               disabled={loading}
               type="submit"
             >
               {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Family Account'}
             </button>
           </form>
-        </section>
+        </motion.section>
       </div>
     </main>
   )
@@ -947,9 +1023,9 @@ function HomeView({
       >
         <div>
           <h2 className="text-[30px] font-extrabold leading-tight">
-            {getGreeting()}
+            {getGreeting()} 👋
           </h2>
-          <p className="mt-1.5 text-[15px] text-[#d9c8ff]/72">
+          <p className="mt-1.5 text-[15px] leading-relaxed text-[#d9c8ff]/72">
             Here&apos;s your family financial overview.
           </p>
         </div>
@@ -997,7 +1073,7 @@ function HomeView({
           <motion.button
             onClick={() => openTransactionModal('expense')}
             aria-label="Add transaction"
-            className="grid aspect-square place-items-center rounded-full bg-[radial-gradient(circle_at_32%_24%,#f58bff,#a735ff_50%,#ef2da4)] text-6xl text-white shadow-[0_18px_42px_rgba(195,47,255,.45)] transition active:scale-95"
+            className="finance-fab-pulse grid aspect-square place-items-center rounded-full bg-[radial-gradient(circle_at_32%_24%,#f58bff,#a735ff_50%,#ef2da4)] text-6xl text-white shadow-[0_18px_42px_rgba(195,47,255,.45)] transition hover:brightness-110 active:scale-95"
             whileTap={{ scale: 0.94 }}
           >
             <FiPlus />
@@ -1067,7 +1143,7 @@ function MetricCard({ accent, change, icon, label, meta, sublabel, value }) {
         <FiMoreHorizontal className="text-xl text-white/58" />
       </div>
       <p className="mt-5 text-[15px] font-bold text-white/86">{label}</p>
-      <p className="mt-2 text-[19px] font-black leading-tight tracking-normal">
+      <p className="tabular-nums mt-2 text-[19px] font-black leading-tight tracking-normal">
         {value}
       </p>
       <p className="mt-3 text-[13px] font-semibold text-[#d9c8ff]/64">{sublabel}</p>
@@ -1105,7 +1181,7 @@ function BalanceCard({ totals }) {
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[160px]">
           <p className="font-extrabold text-white/86">Total Balance</p>
-          <p className="mt-2 text-[clamp(30px,9vw,42px)] font-black leading-tight tracking-normal">
+          <p className="tabular-nums mt-2 text-[clamp(30px,9vw,42px)] font-black leading-tight tracking-normal">
             {formatMoney(totals.balance)}
           </p>
         </div>
@@ -1295,7 +1371,7 @@ function TransactionsView({
         value={formatMoney(totals.balance)}
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         <PeriodSelect period={period} setPeriod={setPeriod} compact />
         <FilterSelect
           label="Category"
@@ -1338,47 +1414,76 @@ function TransactionsView({
 }
 
 function TransactionRow({ handleDeleteTransaction, transaction }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const isIncome = transaction.type === 'income'
   const isCard = transaction.type === 'card'
   const category = getCategory(transaction.category)
   const Icon = isIncome ? TbPigMoney : isCard ? FiCreditCard : category.icon
 
   return (
-    <article className="flex items-center gap-3 rounded-[20px] border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.045] p-3.5">
+    <motion.article
+      className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.03))] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.06)] backdrop-blur-xl"
+      layout
+      whileTap={{ scale: 0.985 }}
+    >
       <span
-        className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-2xl"
+        className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,.12)]"
         style={{
           background: isIncome
-            ? 'linear-gradient(135deg,#2dd4bf,#0f766e)'
-            : `linear-gradient(135deg,${category.color},#12231d)`,
+            ? 'linear-gradient(135deg,#17e7a4,#097c83)'
+            : isCard
+              ? 'linear-gradient(135deg,#a72dff,#6323ff)'
+              : `linear-gradient(135deg,${category.color},rgba(16,7,27,.92))`,
         }}
       >
         <Icon />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-extrabold">{transaction.title}</p>
-        <p className="mt-1 text-xs font-semibold text-[#c7d6ce]/52">
-          {transaction.member} / {transaction.date}
+        <p className="truncate text-sm font-extrabold text-white/92">
+          {transaction.title}
+        </p>
+        <p className="mt-1 text-xs font-semibold text-[#d9c8ff]/52">
+          {transaction.member} · {transaction.date}
         </p>
       </div>
       <div className="text-right">
         <p
-          className={`font-black ${
-            isIncome ? 'text-[#2dd4bf]' : isCard ? 'text-[#facc15]' : 'text-[#f8f3e8]'
+          className={`tabular-nums font-black ${
+            isIncome ? 'text-[#17e7a4]' : isCard ? 'text-[#c084fc]' : 'text-white/88'
           }`}
         >
           {isIncome ? '+' : '-'}
           {formatMoney(transaction.amount)}
         </p>
-        <button
-          onClick={() => handleDeleteTransaction(transaction)}
-          className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#c7d6ce]/44"
-        >
-          <FiTrash2 />
-          Delete
-        </button>
+        {confirmDelete ? (
+          <div className="mt-1 flex items-center justify-end gap-2">
+            <button
+              className="text-xs font-bold text-[#d9c8ff]/55"
+              onClick={() => setConfirmDelete(false)}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="text-xs font-bold text-rose-300"
+              onClick={() => handleDeleteTransaction(transaction)}
+              type="button"
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#d9c8ff]/44 transition hover:text-rose-300"
+            type="button"
+          >
+            <FiTrash2 />
+            Remove
+          </button>
+        )}
       </div>
-    </article>
+    </motion.article>
   )
 }
 
@@ -1462,12 +1567,12 @@ function SettingsView({
           Signed in as {auth.user?.email}
         </p>
         {syncStatus && (
-          <p className="mt-3 rounded-full border border-white/10 bg-white/[.055] px-3 py-2 text-xs font-bold text-[#d9c8ff]/72">
+          <p className="mt-3 rounded-2xl border border-white/10 bg-white/[.055] px-3 py-2 text-xs font-bold text-[#d9c8ff]/72">
             {syncStatus}
           </p>
         )}
         <button
-          className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[.055] px-4 py-3 text-sm font-black text-white/86"
+          className="finance-btn-ghost mt-4 w-full px-4 py-3 text-sm"
           onClick={handleLogout}
           type="button"
         >
@@ -1476,7 +1581,7 @@ function SettingsView({
       </section>
 
       {auth.user?.role === 'owner' && (
-        <section className="rounded-[22px] border border-white/12 bg-[#f8f3e8]/[.045] p-4">
+        <section className="finance-surface-soft p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-black">Add Family Member</h3>
@@ -1528,7 +1633,7 @@ function SettingsView({
               </div>
             </label>
             <button
-              className="w-full rounded-2xl bg-[linear-gradient(135deg,#8b2cff,#f02ca6)] py-3 text-sm font-black text-white shadow-[0_14px_30px_rgba(151,48,255,.28)]"
+              className="finance-btn-primary w-full py-3 text-sm"
               type="submit"
             >
               Add Family Member
@@ -1548,7 +1653,7 @@ function SettingsView({
         </section>
       )}
 
-      <div className="rounded-[22px] border border-[#f8f3e8]/12 bg-[#f8f3e8]/[.045] p-4">
+      <div className="finance-surface-soft p-4">
         <label className="block">
           <span className="text-sm font-bold text-[#c7d6ce]/70">Opening Balance</span>
           <input
@@ -1600,7 +1705,7 @@ function SettingsView({
         </div>
 
         <button
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#8b2cff,#f02ca6)] px-4 py-3 text-sm font-black text-white shadow-[0_14px_30px_rgba(151,48,255,.28)] disabled:opacity-60"
+          className="finance-btn-primary mt-4 flex w-full items-center justify-center gap-2 px-4 py-3 text-sm disabled:opacity-60"
           disabled={isInstalled}
           onClick={handleInstallApp}
           type="button"
@@ -1645,6 +1750,7 @@ function TransactionModal({
   const isCard = type === 'card'
   const showAccountSelector = cards.length > 0
   const amountInputRef = useRef(null)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     const focusTimer = window.setTimeout(() => {
@@ -1656,11 +1762,23 @@ function TransactionModal({
   }, [type])
 
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-sm">
-      <form
-        onSubmit={handleAddTransaction}
+    <motion.div
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-md"
+      exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      onClick={closeTransactionModal}
+    >
+      <motion.form
+        animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
         className="mx-auto w-full max-w-[430px] rounded-[28px] border border-white/12 bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
+        exit={reduceMotion ? undefined : { y: 28, opacity: 0 }}
+        initial={reduceMotion ? false : { y: 28, opacity: 0 }}
+        onClick={event => event.stopPropagation()}
+        onSubmit={handleAddTransaction}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
+        <span className="mx-auto mb-4 block h-1 w-10 rounded-full bg-white/20" />
         <ModalHeader
           close={closeTransactionModal}
           title={`Add ${isIncome ? 'Income' : isCard ? 'Credit Card Spend' : 'Expense'}`}
@@ -1784,21 +1902,18 @@ function TransactionModal({
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
-            className="rounded-2xl border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.05] py-3 font-black"
+            className="finance-btn-ghost py-3"
             onClick={closeTransactionModal}
             type="button"
           >
             Cancel
           </button>
-          <button
-            className="rounded-2xl bg-[linear-gradient(135deg,#8b2cff,#f02ca6)] py-3 font-black text-white shadow-[0_14px_30px_rgba(151,48,255,.28)]"
-            type="submit"
-          >
+          <button className="finance-btn-primary py-3" type="submit">
             Save
           </button>
         </div>
-      </form>
-    </div>
+      </motion.form>
+    </motion.div>
   )
 }
 
@@ -1811,16 +1926,32 @@ function CardModal({
   onAddSpend,
   setCardForm,
 }) {
+  const reduceMotion = useReducedMotion()
+
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-sm">
-      <div className="mx-auto w-full max-w-[430px] rounded-[28px] border border-white/12 bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]">
+    <motion.div
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[80] grid place-items-end bg-black/70 px-3 pb-3 backdrop-blur-md"
+      exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      onClick={close}
+    >
+      <motion.div
+        animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
+        className="mx-auto w-full max-w-[430px] rounded-[28px] border border-white/12 bg-[linear-gradient(155deg,#2a0847_0%,#170624_52%,#08030f_100%)] p-5 shadow-[0_24px_80px_rgba(139,44,255,.24)]"
+        exit={reduceMotion ? undefined : { y: 28, opacity: 0 }}
+        initial={reduceMotion ? false : { y: 28, opacity: 0 }}
+        onClick={event => event.stopPropagation()}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <span className="mx-auto mb-4 block h-1 w-10 rounded-full bg-white/20" />
         <ModalHeader close={close} title="Credit Cards" />
 
         <div className="mt-4 space-y-3">
           {cards.length === 0 && (
-            <div className="rounded-[20px] border border-dashed border-[#f8f3e8]/14 bg-[#f8f3e8]/[.035] p-4">
+            <div className="rounded-[20px] border border-dashed border-white/14 bg-white/[.035] p-4">
               <p className="font-black">No credit cards yet</p>
-              <p className="mt-1 text-sm font-semibold text-[#c7d6ce]/60">
+              <p className="mt-1 text-sm font-semibold text-[#d9c8ff]/60">
                 Add a card to track AED outstanding and card spend.
               </p>
             </div>
@@ -1833,19 +1964,19 @@ function CardModal({
 
             return (
               <article
-                className="rounded-[20px] border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.045] p-4"
+                className="rounded-[20px] border border-white/10 bg-white/[.045] p-4"
                 key={card.id}
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-black">{card.name}</p>
-                    <p className="mt-1 text-xs font-bold text-[#c7d6ce]/52">
+                    <p className="mt-1 text-xs font-bold text-[#d9c8ff]/52">
                       {usage}% limit used
                     </p>
                   </div>
-                  <p className="font-black">{formatMoney(card.balance)}</p>
+                  <p className="tabular-nums font-black">{formatMoney(card.balance)}</p>
                 </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#f8f3e8]/10">
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
                   <span
                     className="block h-full rounded-full"
                     style={{
@@ -1883,7 +2014,7 @@ function CardModal({
         </div>
 
         <form onSubmit={handleAddCard} className="mt-5 rounded-[20px] bg-black/20 p-3">
-          <p className="mb-3 text-sm font-black text-[#f8f3e8]/74">Add New Card</p>
+          <p className="mb-3 text-sm font-black text-[#d9c8ff]/74">Add New Card</p>
           <input
             className={`${modalFieldClass} text-sm font-bold`}
             onChange={event =>
@@ -1921,24 +2052,24 @@ function CardModal({
             />
           </div>
           <button
-            className="mt-3 w-full rounded-2xl bg-[#f8f3e8] py-3 text-sm font-black text-[#07100d]"
+            className="mt-3 w-full rounded-2xl bg-[linear-gradient(135deg,#8b2cff,#f02ca6)] py-3 text-sm font-black text-white shadow-[0_14px_30px_rgba(151,48,255,.28)]"
             type="submit"
           >
             Add Card
           </button>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
 function ModalHeader({ close, title }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3">
       <h3 className="text-xl font-black">{title}</h3>
       <button
         aria-label="Close"
-        className="grid h-10 w-10 place-items-center rounded-full bg-[#f8f3e8]/[.07] text-xl"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[.07] text-xl transition hover:bg-white/[.12] active:scale-95"
         onClick={close}
         type="button"
       >
@@ -1998,13 +2129,13 @@ function BottomNav({ activeTab, setActiveTab }) {
 function PeriodSelect({ compact = false, period, setPeriod }) {
   return (
     <label
-      className={`relative inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[.045] font-bold text-white/88 ${
+      className={`finance-chip relative cursor-pointer ${
         compact ? 'h-10 text-[13px]' : 'h-11 text-[14px]'
       }`}
     >
       <select
         aria-label="Period"
-        className="h-full appearance-none rounded-full bg-transparent py-0 pl-4 pr-8 outline-none"
+        className="h-full w-full appearance-none rounded-full bg-transparent py-0 pl-1 pr-6 outline-none"
         onChange={event => setPeriod(event.target.value)}
         value={period}
       >
@@ -2021,10 +2152,10 @@ function PeriodSelect({ compact = false, period, setPeriod }) {
 
 function FilterSelect({ label, onChange, options, value }) {
   return (
-    <label className="relative inline-flex h-11 shrink-0 items-center rounded-full border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.045] text-sm font-bold">
+    <label className="finance-chip relative h-11 cursor-pointer text-sm">
       <select
         aria-label={label}
-        className="h-full appearance-none rounded-full bg-transparent py-0 pl-4 pr-9 outline-none"
+        className="h-full w-full appearance-none rounded-full bg-transparent py-0 pl-1 pr-6 outline-none"
         onChange={event => onChange(event.target.value)}
         value={value}
       >
@@ -2034,18 +2165,20 @@ function FilterSelect({ label, onChange, options, value }) {
           </option>
         ))}
       </select>
-      <FiChevronDown className="pointer-events-none absolute right-3 text-[#c7d6ce]/66" />
+      <FiChevronDown className="pointer-events-none absolute right-3 text-sm text-white/55" />
     </label>
   )
 }
 
 function SectionTitle({ eyebrow, title, value }) {
   return (
-    <div className="rounded-[24px] border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.045] p-5">
-      <p className="text-sm font-black uppercase text-[#2dd4bf]">{eyebrow}</p>
+    <div className="finance-surface p-5">
+      <p className="text-sm font-black uppercase tracking-[0.14em] text-[#17e7a4]">
+        {eyebrow}
+      </p>
       <div className="mt-2 flex items-end justify-between gap-3">
         <h2 className="text-[28px] font-black leading-none">{title}</h2>
-        <p className="text-right text-xl font-black">{value}</p>
+        <p className="tabular-nums text-right text-xl font-black">{value}</p>
       </div>
     </div>
   )
@@ -2053,16 +2186,16 @@ function SectionTitle({ eyebrow, title, value }) {
 
 function MiniStat({ label, value }) {
   return (
-    <article className="rounded-[20px] border border-[#f8f3e8]/10 bg-[#f8f3e8]/[.045] p-4">
-      <p className="text-xs font-bold text-[#c7d6ce]/52">{label}</p>
-      <p className="mt-2 text-xl font-black">{value}</p>
+    <article className="finance-surface-soft p-4">
+      <p className="text-xs font-bold text-[#d9c8ff]/52">{label}</p>
+      <p className="tabular-nums mt-2 text-xl font-black">{value}</p>
     </article>
   )
 }
 
 function ReportPanel({ children, title }) {
   return (
-    <section className="rounded-[22px] border border-[#f8f3e8]/12 bg-[#f8f3e8]/[.045] p-4">
+    <section className="finance-surface p-4">
       <h3 className="mb-4 text-lg font-black">{title}</h3>
       <div className="space-y-4">{children}</div>
     </section>
@@ -2075,10 +2208,10 @@ function ReportBar({ color, label, max, value }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-        <span className="font-bold text-[#c7d6ce]/76">{label}</span>
+        <span className="font-bold text-[#d9c8ff]/76">{label}</span>
         <span className="font-black">{formatMoney(value)}</span>
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-[#f8f3e8]/10">
+      <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
         <span
           className="block h-full rounded-full"
           style={{
@@ -2093,10 +2226,15 @@ function ReportBar({ color, label, max, value }) {
 
 function EmptyState({ title }) {
   return (
-    <div className="grid min-h-[180px] place-items-center rounded-[22px] border border-dashed border-[#f8f3e8]/12 bg-[#f8f3e8]/[.035] text-center">
+    <div className="grid min-h-[180px] place-items-center rounded-[22px] border border-dashed border-white/12 bg-white/[.03] px-6 text-center">
       <div>
-        <FiEdit3 className="mx-auto text-3xl text-[#c7d6ce]/36" />
-        <p className="mt-3 text-sm font-black text-[#c7d6ce]/64">{title}</p>
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-white/10 bg-white/[.05] text-2xl text-[#d9c8ff]/40">
+          <FiEdit3 />
+        </span>
+        <p className="mt-4 text-sm font-black text-[#d9c8ff]/72">{title}</p>
+        <p className="mt-1 text-xs font-semibold text-[#d9c8ff]/48">
+          Use Quick Add on Home to create your first entry.
+        </p>
       </div>
     </div>
   )
