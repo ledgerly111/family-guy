@@ -59,8 +59,8 @@ Build command: npm run build
 Build output directory: .vercel/output/static
 ```
 
-The `build` script runs the Cloudflare Next adapter, so Pages will create the
-correct output directory during deployment.
+The `build` script runs the pinned Cloudflare Next adapter from `package-lock.json`,
+so Pages will create the correct output directory during deployment.
 
 `wrangler.toml` also declares `pages_build_output_dir = ".vercel/output/static"`
 so Cloudflare no longer treats the config as invalid.

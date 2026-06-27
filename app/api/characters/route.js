@@ -6,6 +6,8 @@
 import characters from '@/data/characters.json'
 import { NextResponse } from 'next/server'
 
+export const runtime = 'edge'
+
 export async function GET() {
   return NextResponse.json({ characters: characters.data })
 }

@@ -12,6 +12,8 @@ import characters from '@/data/characters.json'
 import quotes from '@/data/quotes.json'
 import { NextResponse } from 'next/server'
 
+export const runtime = 'edge'
+
 export async function GET(req, { params }) {
   try {
     const character = characters.data.find(item => item.slug === params.slug)

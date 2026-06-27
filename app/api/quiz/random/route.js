@@ -7,6 +7,8 @@
 import questions from '@/data/quiz.json'
 import { NextResponse } from 'next/server'
 
+export const runtime = 'edge'
+
 export async function GET() {
   try {
     const random = Math.floor(Math.random() * questions.data.length)
