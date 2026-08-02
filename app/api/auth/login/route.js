@@ -5,7 +5,7 @@ import {
   createSessionForUser,
   setSessionCookie,
 } from '@/lib/server/auth'
-import { hashSessionToken } from '@/lib/server/passwords'
+import { createPasswordHash, hashSessionToken } from '@/lib/server/passwords'
 import { getStore } from '@/lib/server/store'
 import { parseBody } from '@/lib/server/validation'
 
@@ -16,10 +16,16 @@ export async function POST(request) {
     const body = parseBody(await request.json())
     const store = getStore()
     await store.ensureSchema()
-    const user = await authenticateUser(body.email, body.password)
+    const authResult = await authenticateUser(body.email, body.password)
 
-    if (!user) {
+    if (!authResult) {
       return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 })
+    }
+
+    const { user, legacyPassword } = authResult
+
+    if (legacyPassword) {
+      await store.updatePasswordHash(user.id, await createPasswordHash(body.password))
     }
 
     const members = await store.getMembers(user.familyId)

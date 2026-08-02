@@ -904,7 +904,7 @@ const Header = memo(function Header({ syncStatus }) {
 })
 
 function AuthScreen({ onAuthenticated, syncStatus }) {
-  const [mode, setMode] = useState('register')
+  const [mode, setMode] = useState('login')
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -943,7 +943,7 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
       if (!response.ok) {
         if (targetMode === 'login' && response.status === 401) {
           setError(
-            'No matching account on this site yet. Create your family account first, then you can log in here anytime.',
+            'That email or password did not match. Double-check your password, or create a new family account if you have not used this site before.',
           )
           setShowCreateHint(true)
           return

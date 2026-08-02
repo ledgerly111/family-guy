@@ -150,7 +150,7 @@ function base64UrlDecode(value) {
   return Uint8Array.from(binary, character => character.charCodeAt(0))
 }
 
-async function derivePasswordHash(password, salt, hashIterations, hashDigest) {
+async function derivePasswordHash(password, salt, hashIterations, hashDigest, saltMode = 'decoded') {
   const key = await crypto.subtle.importKey(
     'raw',
     encoder.encode(String(password)),
@@ -158,10 +158,11 @@ async function derivePasswordHash(password, salt, hashIterations, hashDigest) {
     false,
     ['deriveBits'],
   )
+  const saltBytes = saltMode === 'string' ? encoder.encode(String(salt)) : base64UrlDecode(salt)
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: base64UrlDecode(salt),
+      salt: saltBytes,
       iterations: Number(hashIterations),
       hash: hashDigest.toUpperCase().replace('SHA', 'SHA-'),
     },
@@ -192,18 +193,72 @@ async function createPasswordHash(password) {
   return `pbkdf2:${digest}:${iterations}:${salt}:${hash}`
 }
 
+function parseStoredPasswordHash(storedHash) {
+  const parts = String(storedHash || '').split(':')
+
+  if (parts[0] === 'sha256' && parts.length >= 3) {
+    return {
+      scheme: 'sha256',
+      salt: parts[1],
+      hash: parts[2],
+    }
+  }
+
+  if (parts[0] === 'pbkdf2' && parts.length >= 5) {
+    return {
+      scheme: 'pbkdf2',
+      digest: parts[1],
+      iterations: Number(parts[2]),
+      salt: parts[3],
+      hash: parts.slice(4).join(':'),
+    }
+  }
+
+  return null
+}
+
+async function verifyPasswordDetailed(password, storedHash) {
+  const parsed = parseStoredPasswordHash(storedHash)
+  if (!parsed) {
+    return { valid: false, legacy: false }
+  }
+
+  if (parsed.scheme === 'sha256') {
+    const valid = safeEqual(
+      await hashToken(`${parsed.salt}:${String(password)}`),
+      parsed.hash,
+    )
+    return { valid, legacy: valid }
+  }
+
+  const modern = await derivePasswordHash(
+    password,
+    parsed.salt,
+    parsed.iterations,
+    parsed.digest,
+    'decoded',
+  )
+  if (safeEqual(modern, parsed.hash)) {
+    return { valid: true, legacy: false }
+  }
+
+  const legacy = await derivePasswordHash(
+    password,
+    parsed.salt,
+    parsed.iterations,
+    parsed.digest,
+    'string',
+  )
+  if (safeEqual(legacy, parsed.hash)) {
+    return { valid: true, legacy: true }
+  }
+
+  return { valid: false, legacy: false }
+}
+
 async function verifyPassword(password, storedHash) {
-  const [scheme, storedDigest, storedIterations, salt, hash] = String(storedHash || '').split(':')
-  if (scheme === 'sha256' && salt && hash) {
-    return safeEqual(await hashToken(`${salt}:${String(password)}`), hash)
-  }
-
-  if (scheme !== 'pbkdf2' || !storedDigest || !storedIterations || !salt || !hash) {
-    return false
-  }
-
-  const candidate = await derivePasswordHash(password, salt, Number(storedIterations), storedDigest)
-  return safeEqual(candidate, hash)
+  const result = await verifyPasswordDetailed(password, storedHash)
+  return result.valid
 }
 
 function createSessionToken() {
@@ -427,8 +482,19 @@ export async function handleLogin({ request, env }) {
   const body = await readBody(request)
   const user = await getUserByEmail(env, normalizeEmail(body.email))
 
-  if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
+  const verification = user
+    ? await verifyPasswordDetailed(body.password, user.passwordHash)
+    : { valid: false, legacy: false }
+
+  if (!user || !verification.valid) {
     return json({ error: 'Invalid email or password.' }, 401)
+  }
+
+  if (verification.legacy) {
+    await getDb(env)
+      .prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+      .bind(await createPasswordHash(body.password), user.id)
+      .run()
   }
 
   const family = mapFamily(
