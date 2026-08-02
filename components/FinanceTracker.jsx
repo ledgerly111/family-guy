@@ -904,7 +904,7 @@ const Header = memo(function Header({ syncStatus }) {
 })
 
 function AuthScreen({ onAuthenticated, syncStatus }) {
-  const [mode, setMode] = useState('login')
+  const [mode, setMode] = useState('register')
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -912,25 +912,43 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showCreateHint, setShowCreateHint] = useState(false)
   const isLogin = mode === 'login'
 
-  const handleSubmit = async event => {
-    event.preventDefault()
+  useEffect(() => {
+    apiFetch('/api/admin/setup', { method: 'POST' }).catch(() => {})
+  }, [])
+
+  const submitAuth = async targetMode => {
     setError('')
+    setShowCreateHint(false)
     setLoading(true)
 
+    const payloadBody = {
+      ...form,
+      email: form.email.trim(),
+    }
+
     try {
-      const response = await apiFetch(isLogin ? '/api/auth/login' : '/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          email: form.email.trim(),
-        }),
-      })
+      const response = await apiFetch(
+        targetMode === 'login' ? '/api/auth/login' : '/api/auth/register',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadBody),
+        },
+      )
       const payload = await response.json()
 
       if (!response.ok) {
+        if (targetMode === 'login' && response.status === 401) {
+          setError(
+            'No matching account on this site yet. Create your family account first, then you can log in here anytime.',
+          )
+          setShowCreateHint(true)
+          return
+        }
+
         setError(payload.error || 'Could not continue.')
         return
       }
@@ -941,6 +959,18 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = event => {
+    event.preventDefault()
+    submitAuth(mode)
+  }
+
+  const handleCreateFromLogin = () => {
+    setMode('register')
+    setShowCreateHint(false)
+    setError('')
+    submitAuth('register')
   }
 
   return (
@@ -964,10 +994,16 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
             </div>
           </div>
 
+          <p className="mt-4 text-xs font-semibold leading-relaxed text-[#d9c8ff]/58">
+            {isLogin
+              ? 'Use Login only if you already created your family on this site.'
+              : 'First time here? Create your family once on this site and you are ready to go.'}
+          </p>
+
           <div className="mt-6 grid grid-cols-2 rounded-2xl border border-white/10 bg-white/[.045] p-1">
             {[
-              ['login', 'Login'],
               ['register', 'Create Family'],
+              ['login', 'Login'],
             ].map(([id, label]) => (
               <button
                 className={`rounded-xl px-3 py-2 text-sm font-black transition ${
@@ -979,6 +1015,7 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
                 onClick={() => {
                   setMode(id)
                   setError('')
+                  setShowCreateHint(false)
                 }}
                 type="button"
               >
@@ -1031,6 +1068,16 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
             {error && (
               <div className="rounded-2xl border border-rose-300/20 bg-rose-400/10 p-3 text-sm font-bold text-rose-100">
                 {error}
+                {showCreateHint && (
+                  <button
+                    className="finance-btn-primary mt-3 w-full py-2.5 text-xs"
+                    disabled={loading}
+                    onClick={handleCreateFromLogin}
+                    type="button"
+                  >
+                    Create family with these details
+                  </button>
+                )}
               </div>
             )}
             {syncStatus && !error && (
@@ -1044,7 +1091,11 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
               disabled={loading}
               type="submit"
             >
-              {loading ? 'Please wait...' : isLogin ? 'Login' : 'Create Family Account'}
+              {loading
+                ? 'Please wait...'
+                : isLogin
+                  ? 'Login'
+                  : 'Create & Continue'}
             </button>
           </form>
         </motion.section>
