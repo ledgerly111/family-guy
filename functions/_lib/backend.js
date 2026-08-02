@@ -94,19 +94,25 @@ function parseCookie(request, name) {
   return match ? decodeURIComponent(match.slice(name.length + 1)) : ''
 }
 
-function setSessionCookie(response, token) {
+function setSessionCookie(response, token, request) {
+  const secure = request ? new URL(request.url).protocol === 'https:' : true
+  const secureFlag = secure ? '; Secure' : ''
+
   response.headers.append(
     'Set-Cookie',
     `${sessionCookieName}=${encodeURIComponent(
       token,
-    )}; Path=/; Max-Age=${sessionDays * 24 * 60 * 60}; HttpOnly; Secure; SameSite=Lax`,
+    )}; Path=/; Max-Age=${sessionDays * 24 * 60 * 60}; HttpOnly${secureFlag}; SameSite=Lax`,
   )
 }
 
-function clearSessionCookie(response) {
+function clearSessionCookie(response, request) {
+  const secure = request ? new URL(request.url).protocol === 'https:' : true
+  const secureFlag = secure ? '; Secure' : ''
+
   response.headers.append(
     'Set-Cookie',
-    `${sessionCookieName}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    `${sessionCookieName}=; Path=/; Max-Age=0; HttpOnly${secureFlag}; SameSite=Lax`,
   )
 }
 
@@ -272,7 +278,8 @@ export async function ensureSchema(env) {
     try {
       await db.prepare(statement).run()
     } catch (error) {
-      if (!String(error?.message || '').toLowerCase().includes('duplicate column')) {
+      const message = String(error?.message || '').toLowerCase()
+      if (!message.includes('duplicate column') && !message.includes('already exists')) {
         throw error
       }
     }
@@ -411,7 +418,7 @@ export async function handleRegister({ request, env }) {
 
   const token = await createSession(env, user.id)
   const response = json(authPayload({ user, family, members: await getMembers(env, family.id) }))
-  setSessionCookie(response, token)
+  setSessionCookie(response, token, request)
   return response
 }
 
@@ -429,7 +436,7 @@ export async function handleLogin({ request, env }) {
   )
   const token = await createSession(env, user.id)
   const response = json(authPayload({ user, family, members: await getMembers(env, user.familyId) }))
-  setSessionCookie(response, token)
+  setSessionCookie(response, token, request)
   return response
 }
 
@@ -440,7 +447,7 @@ export async function handleLogout({ request, env }) {
   }
 
   const response = json({ ok: true })
-  clearSessionCookie(response)
+  clearSessionCookie(response, request)
   return response
 }
 

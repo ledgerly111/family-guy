@@ -197,6 +197,13 @@ const formatChange = (current, previous) => {
   }
 }
 
+const apiFetch = (url, options = {}) =>
+  fetch(url, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    ...options,
+  })
+
 function LedgerLoader() {
   return (
     <main className="min-h-screen bg-[#06040d] text-white">
@@ -264,7 +271,8 @@ export default function FinanceTracker() {
   const [transactionModal, setTransactionModal] = useState(null)
   const [cardModalOpen, setCardModalOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
-  const [installPrompt, setInstallPrompt] = useState(null)
+  const [installPromptAvailable, setInstallPromptAvailable] = useState(false)
+  const installPromptRef = useRef(null)
   const [installHelpOpen, setInstallHelpOpen] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [stateLoaded, setStateLoaded] = useState(false)
@@ -297,7 +305,7 @@ export default function FinanceTracker() {
 
     const loadSession = async () => {
       try {
-        const authResponse = await fetch('/api/auth/me', { cache: 'no-store' })
+        const authResponse = await apiFetch('/api/auth/me')
         if (!authResponse.ok) {
           if (!cancelled) {
             setHydrated(true)
@@ -313,7 +321,7 @@ export default function FinanceTracker() {
           return
         }
 
-        const stateResponse = await fetch('/api/finance/state', { cache: 'no-store' })
+        const stateResponse = await apiFetch('/api/finance/state')
         const stateData = stateResponse.ok ? await stateResponse.json() : {}
 
         if (cancelled) return
@@ -356,12 +364,14 @@ export default function FinanceTracker() {
 
     const handleBeforeInstallPrompt = event => {
       event.preventDefault()
-      setInstallPrompt(event)
+      installPromptRef.current = event
+      setInstallPromptAvailable(true)
     }
 
     const handleInstalled = () => {
       setIsInstalled(true)
-      setInstallPrompt(null)
+      installPromptRef.current = null
+      setInstallPromptAvailable(false)
       setInstallHelpOpen(false)
     }
 
@@ -381,7 +391,7 @@ export default function FinanceTracker() {
     const timer = window.setTimeout(async () => {
       try {
         setSyncStatus('Saving...')
-        const response = await fetch('/api/finance/state', {
+        const response = await apiFetch('/api/finance/state', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ transactions, cards, settings }),
@@ -655,10 +665,19 @@ export default function FinanceTracker() {
   }
 
   const handleInstallApp = async () => {
-    if (installPrompt) {
-      installPrompt.prompt()
-      await installPrompt.userChoice
-      setInstallPrompt(null)
+    const promptEvent = installPromptRef.current
+
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt()
+        const choice = await promptEvent.userChoice
+        if (choice.outcome === 'accepted') {
+          installPromptRef.current = null
+          setInstallPromptAvailable(false)
+        }
+      } catch {
+        setInstallHelpOpen(true)
+      }
       return
     }
 
@@ -666,7 +685,7 @@ export default function FinanceTracker() {
   }
 
   const loadFinanceState = async authData => {
-    const stateResponse = await fetch('/api/finance/state', { cache: 'no-store' })
+    const stateResponse = await apiFetch('/api/finance/state')
     const stateData = stateResponse.ok ? await stateResponse.json() : {}
 
     setAuth(authData)
@@ -679,7 +698,7 @@ export default function FinanceTracker() {
   }
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await apiFetch('/api/auth/logout', { method: 'POST' })
     setAuth(null)
     setMembers([])
     setStateLoaded(false)
@@ -694,7 +713,7 @@ export default function FinanceTracker() {
     event.preventDefault()
     setMemberInvite(null)
 
-    const response = await fetch('/api/family/members', {
+    const response = await apiFetch('/api/family/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(memberForm),
@@ -806,7 +825,7 @@ export default function FinanceTracker() {
                     handleInstallApp={handleInstallApp}
                     handleLogout={handleLogout}
                     installHelpOpen={installHelpOpen}
-                    installPromptAvailable={Boolean(installPrompt)}
+                    installPromptAvailable={installPromptAvailable}
                     isInstalled={isInstalled}
                     memberForm={memberForm}
                     memberInvite={memberInvite}
@@ -901,10 +920,13 @@ function AuthScreen({ onAuthenticated, syncStatus }) {
     setLoading(true)
 
     try {
-      const response = await fetch(isLogin ? '/api/auth/login' : '/api/auth/register', {
+      const response = await apiFetch(isLogin ? '/api/auth/login' : '/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          email: form.email.trim(),
+        }),
       })
       const payload = await response.json()
 
